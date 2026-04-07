@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* -------------------- Global -------------------- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* -------------------- Container -------------------- */
+.container {
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* -------------------- Top Bar -------------------- */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.top-bar h2 {
+    font-weight: 700;
+    font-size: 28px;
+}
+
+.logout {
+    background: #ff4b5c;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.logout:hover {
+    background: #ff1e2d;
+}
+
+/* -------------------- Progress Bar -------------------- */
+.progress-container {
+    margin-bottom: 25px;
+}
+
+.progress-bar-bg {
+    background: rgba(255,255,255,0.2);
+    border-radius: 50px;
+    height: 15px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #00ffcc;
+    width: 0%;
+    border-radius: 50px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+/* -------------------- Task Form -------------------- */
+form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+input, select, button {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+}
+
+button {
+    background: #00c9a7;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #00a386;
+}
+
+/* -------------------- Task Cards Table -------------------- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+}
+
+th {
+    background: rgba(0,0,0,0.3);
+}
+
+tr:nth-child(even) {
+    background: rgba(255,255,255,0.05);
+}
+
+tr:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* -------------------- Status -------------------- */
+.done {
+    color: #00ff88;
+    font-weight: 600;
+}
+
+.pending {
+    color: #ffcc00;
+    font-weight: 600;
+}
+
+/* -------------------- Priority -------------------- */
+.high { color: #ff4b5c; font-weight: 600; }
+.medium { color: #ffd93d; font-weight: 600; }
+.low { color: #00ff88; font-weight: 600; }
+
+/* -------------------- Actions -------------------- */
+.actions a {
+    margin: 0 5px;
+    text-decoration: none;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+.actions a:hover {
+    transform: scale(1.2);
+}
+
+/* -------------------- Empty State -------------------- */
+.empty {
+    text-align: center;
+    margin-top: 40px;
+    font-weight: 500;
+    font-size: 18px;
+}
+
+/* -------------------- Responsive -------------------- */
+@media(max-width: 600px){
+    form {
+        grid-template-columns: 1fr;
+    }
+
+    th, td {
+        font-size: 12px;
+    }
+
+    .top-bar h2 {
+        font-size: 22px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <h2>🚀 Smart Dashboard</h2>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-container">
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: {{progress}}%;"></div>
+        </div>
+        <div class="progress-text">{{progress}}% Completed</div>
+    </div>
+
+    <!-- Add Task Form -->
+    <form action="/add" method="POST">
+        <input name="task" placeholder="Task" required>
+        <input name="category" placeholder="Category" required>
+        <select name="priority">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+        </select>
+        <input type="date" name="start_date" required>
+        <input type="date" name="end_date" required>
+        <button type="submit">➕ Add Task</button>
+    </form>
+
+    <!-- Tasks Table -->
+    {% if tasks %}
+    <table>
+        <tr>
+            <th>Task</th>
+            <th>Category</th>
+            <th>Priority</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Day</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+
+        {% for t in tasks %}
+        <tr>
+            <td>{{t["task"]}}</td>
+            <td>{{t["category"]}}</td>
+            <td class="{{t["priority"]}}">{{t["priority"] | capitalize}}</td>
+            <td>{{t["start_date"]}}</td>
+            <td>{{t["end_date"]}}</td>
+            <td>{{t["day"]}}</td>
+            <td>
+                {% if t["done"] == 1 %}
+                    <span class="done">✅ Done</span>
+                {% else %}
+                    <span class="pending">⏳ Pending</span>
+                {% endif %}
+            </td>
+            <td class="actions">
+                <a href="/done/{{t["id"]}}">✔</a>
+                <a href="/delete/{{t["id"]}}">🗑</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="empty">
+        <h3>No tasks yet 😴</h3>
+        <p>Add your first task above 🚀</p>
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
